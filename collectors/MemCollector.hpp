@@ -49,19 +49,3 @@ private:
   double totalMemory = 0;
   double freeMemory = 0;
 };
-
-int main() {
-  MemCollector memCollector;
-  while (true) {
-    memCollector.update();
-    double totalMemory = memCollector.getTotal();
-    double freeMemory = memCollector.getFree();
-    double utilization = memCollector.getUtilization();
-
-    printf("Total Memory: %.2f KB\n", totalMemory);
-    printf("Free Memory: %.2f KB\n", freeMemory);
-    printf("Memory Utilization: %.2f%%\n", utilization);
-    sleep(1);
-  }
-  return 0;
-}
