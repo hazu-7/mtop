@@ -1,67 +1,10 @@
-#include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <unistd.h>
-#include <vector>
+#include"../Process.hpp"
 using namespace std;
 using namespace std::filesystem;
-
-class Process {
-public:
-  Process(int pid, const string &name, const string &command, int cpuUsage, int totalCpuUsage,
-          int memoryUsage, int totalMemoryUsage)
-      : pid(pid), name(name), command(command), cpuUsage(cpuUsage), totalCpuUsage(totalCpuUsage),
-        memoryUsage(memoryUsage), totalMemoryUsage(totalMemoryUsage) {}
-  Process(int pid) : pid(pid) {}
-
-  void DisplayInfo() const {
-    cout << "PID: " << this->pid << '\n';
-    cout << "Name: " << this->name << '\n';
-    // cout << "Command: " << this->command << '\n';
-    cout << "CPU Usage: %" << (this->cpuUsage/(double)totalCpuUsage) * 100 << '\n';
-    cout << "Memory Usage: %" << (this->memoryUsage/(double)totalMemoryUsage)*100 << endl;
-    cout << "******************************************************" << '\n';
-  }
-  int getPid() const { return pid; }
-
-  enum class SortBy {
-    pid,
-    cpu,
-    name,
-    mem,
-  };
-
-  static void sort(vector<Process> &processList, SortBy criterion = SortBy::pid,
-                   bool ascending = true) {
-    std::sort(processList.begin(), processList.end(),
-              [criterion, ascending](const Process &a, const Process &b) {
-                switch (criterion) {
-                case SortBy::pid:
-                  return ascending ? (a.pid < b.pid) : (a.pid > b.pid);
-                case SortBy::cpu:
-                  return ascending ? (a.cpuUsage < b.cpuUsage)
-                                   : (a.cpuUsage > b.cpuUsage);
-                case SortBy::mem:
-                  return ascending ? (a.memoryUsage < b.memoryUsage)
-                                   : (a.memoryUsage > b.memoryUsage);
-                case SortBy::name:
-                  return ascending ? (a.name < b.name) : (a.name > b.name);
-                }
-                return false;
-              });
-  }
-
-private:
-  int pid = 0;
-  string name = "";
-  string command = "";
-  int cpuUsage = 0.0;
-  int memoryUsage = 0;
-  int totalCpuUsage = 0;
-  int totalMemoryUsage = 0;
-};
 
 class ProcessCollector {
 public:
@@ -87,7 +30,38 @@ public:
       }
     }
   }
-  Process MakeProcess(string pid, int totalCpuUsage, int totalMemoryUsage) {
+
+  vector<Process> getProcesses(int limit = 0, string sortBy = "pid", bool ascending = false){
+    sort(sortBy,ascending);
+    if(limit <= 0){
+      return _processList;
+    }else {
+      vector<Process> temp;
+      for(int i = 0; i < limit; i++){
+        temp.push_back(_processList[i]);
+      }
+      return temp;
+    }
+  }
+
+private:
+  path _procPath = "/proc";
+  vector<Process> _processList = {};
+  int _ProcessCount() const { return static_cast<int>(_processList.size()); }
+
+  void const sort(string sortBy = "pid",
+                  bool ascending = false) {
+    if (sortBy == "cpu") {
+      Process::sort(_processList, Process::SortBy::cpu, ascending);
+    } else if (sortBy == "mem") {
+      Process::sort(_processList, Process::SortBy::mem, ascending);
+    } else if (sortBy == "name") {
+      Process::sort(_processList, Process::SortBy::name, ascending);
+    } else {
+      Process::sort(_processList, Process::SortBy::pid, ascending);
+    }
+  }
+    Process MakeProcess(string pid, int totalCpuUsage, int totalMemoryUsage) {
 
     path dir = "/proc/" + pid;
     string word;
@@ -148,36 +122,7 @@ public:
     getline(file3, content);
     string command = content;
     file3.close();
-    return Process(stoi(pid), name, command, utime + stime, totalCpuUsage, memoryUsage * 4, totalMemoryUsage);
+    return Process(stoi(pid), name, command, utime + stime, totalCpuUsage,
+                   memoryUsage * 4, totalMemoryUsage);
   }
-
-  void const DisplayProcesses(int limit = 0, string sortBy = "pid",
-                              bool ascending = false) {
-    if (limit == 0) {
-      limit = _ProcessCount();
-    }
-    if(sortBy == "cpu"){
-      Process::sort(_processList, Process::SortBy::cpu, ascending);
-    }else if(sortBy == "mem"){
-      Process::sort(_processList, Process::SortBy::mem, ascending);
-    }else if(sortBy == "name"){
-      Process::sort(_processList, Process::SortBy::name, ascending);
-    }else{
-      Process::sort(_processList, Process::SortBy::pid, ascending);
-    }
-
-    int count = 0;
-    for (const auto &process : _processList) {
-      if(count > limit){
-        break;
-      }
-      process.DisplayInfo();
-      count++;
-    }
-  }
-
-private:
-  path _procPath = "/proc";
-  vector<Process> _processList = {};
-  int _ProcessCount() const { return static_cast<int>(_processList.size()); }
 };
