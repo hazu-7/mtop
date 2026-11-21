@@ -9,9 +9,9 @@ public:
 
   void update() { ReadMemStats(totalMemory, freeMemory); }
 
-  double getTotal() const { return totalMemory; }
+  int getTotal() const { return totalMemory; }
 
-  double getFree() const { return freeMemory; }
+  int getFree() const { return freeMemory; }
 
   void ReadMemStats(double &total, double &free) {
     ifstream file("/proc/meminfo");
@@ -30,7 +30,7 @@ public:
 
       if (key == "MemTotal:") {
         total = value; // in KB
-      } else if (key == "MemFree:") {
+      } else if (key == "MemAvailable:") {
         free = value; // in KB
       }
     }

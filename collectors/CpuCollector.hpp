@@ -15,9 +15,9 @@ public:
     previousIdle = currentIdle;
     ReadCpuStats(currentTotal, currentIdle);
   }
-  double getTotal() const { return currentTotal; }
+  int getTotal() const { return currentTotal; }
 
-  double getIdle() const { return currentIdle; }
+  int getIdle() const { return currentIdle; }
 
   const double getUtilization() {
     currentTotal = getTotal();
